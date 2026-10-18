@@ -479,6 +479,94 @@ def test_legacy_flags():
 
 
 @test
+def test_menu_add_endpoint_and_key_flow():
+    """Drive the interactive menu end to end through a piped stdin."""
+    with Sandbox() as box:
+        script = "\n".join([
+            "1",                          # menu: tambah endpoint
+            "GW Menu",                    # nama endpoint
+            "menugw",                     # prefix
+            "",                           # tipe endpoint (default)
+            "",                           # api type (default)
+            "https://api.example.com/v1",  # base url
+            "y",                          # tambah API key sekarang?
+            "sk-menu-key-1234",           # api key
+            "menukey",                    # label key
+            "",                           # pause
+            "0",                          # keluar
+        ]) + "\n"
+        proc = box.run("menu", stdin=script, expect=0)
+        state = box.state()
+        check(len(state["nodes"]) == 1, "menu 1 tidak membuat endpoint:\n%s" % proc.stdout[-500:])
+        check(state["nodes"][0]["prefix"] == "menugw", "prefix dari menu salah")
+        check(state["nodes"][0]["apiType"] == "chat", "apiType dari menu salah")
+        check(len(state["connections"]) == 1, "menu tidak menambah API key")
+        check(state["connections"][0]["apiKey"] == "sk-menu-key-1234", "api key dari menu salah")
+        check("menugw" in proc.stdout, "output menu tidak menyebut endpoint")
+        check(len(backups(box)) >= 1, "menu tidak membuat backup sebelum tulis")
+
+
+@test
+def test_menu_edit_endpoint_flow():
+    with Sandbox() as box:
+        box.json_run("add-endpoint", "GW CLI", "menugw", "https://api.example.com/v1")
+        script = "\n".join([
+            "3",                             # menu: edit endpoint
+            "menugw",                        # endpoint yang diedit
+            "GW Renamed",                    # nama baru
+            "menugw",                        # prefix baru (sama)
+            "",                              # api type (default)
+            "https://api.example.com/v2",    # base url baru
+            "",                              # pause
+            "0",
+        ]) + "\n"
+        proc = box.run("menu", stdin=script, expect=0)
+        node = box.state()["nodes"][0]
+        check(node["name"] == "GW Renamed", "nama tidak berubah lewat menu: %s" % node["name"])
+        check(node["baseUrl"] == "https://api.example.com/v2",
+              "base url tidak berubah lewat menu: %s" % node["baseUrl"])
+        check("diperbarui" in proc.stdout, "menu tidak melaporkan update")
+
+
+@test
+def test_menu_router_key_and_backup_flow():
+    with Sandbox() as box:
+        script = "\n".join([
+            "7",          # menu: API key 9router
+            "1",          # buat key baru
+            "menu-client",  # nama key
+            "",           # pause
+            "9",          # menu: backup & restore
+            "1",          # buat backup
+            "",           # pause
+            "0",
+        ]) + "\n"
+        proc = box.run("menu", stdin=script, expect=0)
+        keys = box.state()["keys"]
+        check(len(keys) == 1 and keys[0]["name"] == "menu-client",
+              "menu 7 tidak membuat API key: %s" % keys)
+        check("sk-mock-" in proc.stdout, "key baru tidak ditampilkan sekali di menu")
+        check(len(backups(box)) >= 1, "menu 9 tidak membuat backup")
+
+
+@test
+def test_menu_survives_unknown_choice_and_api_error():
+    with Sandbox() as box:
+        script = "\n".join([
+            "zzz",        # pilihan tidak dikenal
+            "",           # pause
+            "3",          # edit endpoint, tapi belum ada endpoint
+            "",           # pause
+            "0",
+        ]) + "\n"
+        proc = box.run("menu", stdin=script, expect=0)
+        output = proc.stdout + proc.stderr
+        check("Pilihan tidak dikenal" in output, "menu tidak menangani pilihan salah")
+        check("Belum ada endpoint custom" in output,
+              "menu tidak menangani kondisi kosong: %s" % output[-300:])
+
+
+@test
 def test_python38_compatibility():
     source = ENGINE.read_text(encoding="utf-8")
     banned = ["removeprefix", "removesuffix", "str | None", "dict |", "list |", "match "]

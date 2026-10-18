@@ -174,6 +174,17 @@ def ask(prompt: str, default: str = "") -> str:
 
 
 def ask_secret(prompt: str) -> str:
+    """Read a secret without echoing it.
+
+    getpass() reads from /dev/tty (or the console handle) and bypasses Python's
+    buffered stdin, which breaks when the menu is driven by a pipe. When stdin is
+    not a terminal we read a normal line instead, so piped input stays predictable.
+    """
+    try:
+        if sys.stdin is not None and not sys.stdin.isatty():
+            return ask(prompt)
+    except Exception:
+        pass
     try:
         import getpass
 
@@ -185,13 +196,21 @@ def ask_secret(prompt: str) -> str:
             return ""
 
 
-def confirm(prompt: str, assume_yes: bool = False) -> bool:
+def confirm(prompt: str, assume_yes: bool = False, default: bool = False) -> bool:
+    """Ask a yes/no question.
+
+    assume_yes skips the question (used by --yes). default controls what a bare
+    Enter means, so a prompt can be an opt-in (y/N) or an opt-out (Y/n) question.
+    """
     if assume_yes:
         return True
+    suffix = "[Y/n]" if default else "[y/N]"
     try:
-        answer = input("%s [y/N]: " % prompt).strip().lower()
+        answer = input("%s %s: " % (prompt, suffix)).strip().lower()
     except EOFError:
-        return False
+        return default
+    if not answer:
+        return default
     return answer in ("y", "ya", "yes")
 
 
@@ -1395,7 +1414,7 @@ def menu_add_endpoint(nr: NineRouter, plat: PlatformInfo, args: argparse.Namespa
     ok("Endpoint dibuat: %s" % node.get("id", "?"))
     say(render_table(["field", "nilai"], [[k, node.get(k)] for k in
                        ("id", "name", "prefix", "type", "apiType", "baseUrl") if k in node]))
-    if confirm("Tambahkan API key untuk endpoint ini sekarang?", True):
+    if confirm("Tambahkan API key untuk endpoint ini sekarang?", default=True):
         menu_add_key(nr, plat, args, node)
 
 
