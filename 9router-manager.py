@@ -671,7 +671,8 @@ def read_connection_secrets(plat: PlatformInfo) -> Dict[str, str]:
         return {}
     conn = None
     try:
-        uri = "file:%s?mode=ro" % plat.db_path.as_posix()
+        # quote() keeps spaces and '#'/'?' inside Windows paths from breaking the URI
+        uri = "file:%s?mode=ro" % urllib.parse.quote(plat.db_path.as_posix())
         conn = sqlite3.connect(uri, uri=True, timeout=2)
         result: Dict[str, str] = {}
         for row in conn.execute("SELECT id, data FROM providerConnections"):

@@ -101,7 +101,8 @@ def test_platform_info_detect_uses_userprofile():
         os.environ.pop("NINEROUTER_DATA_DIR", None)
         os.environ.pop("NINEROUTER_MANAGER_HOME", None)
         plat = engine.PlatformInfo.detect()
-        check(str(plat.home) == "/tmp/fake-profile", "home harus dari USERPROFILE saat HOME kosong")
+        check(plat.home == Path("/tmp/fake-profile"),
+              "home harus dari USERPROFILE saat HOME kosong, dapat %s" % plat.home)
     finally:
         os.environ.clear()
         os.environ.update(original)
