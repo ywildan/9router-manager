@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: ${{ matrix.os }} / python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: "3.8"
+          - os: ubuntu-latest
+            python: "3.12"
+          - os: macos-latest
+            python: "3.12"
+          - os: windows-latest
+            python: "3.12"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Show interpreter
+        run: python -c "import sys, platform; print(sys.version, platform.platform())"
+
+      - name: Platform & path tests
+        run: python tests/test_platform_paths.py
+
+      - name: Smoke tests (mock 9router)
+        run: python tests/smoke_test.py
+
+      - name: Aggregate runner
+        run: python tests/run_all.py
+
+  launchers:
+    name: launchers / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: POSIX launcher
+        if: runner.os != 'Windows'
+        run: bash 9router-manager.sh --version
+
+      - name: Windows launcher (cmd)
+        if: runner.os == 'Windows'
+        run: cmd /c 9router-manager.cmd --version
+
+      - name: Windows launcher (PowerShell)
+        if: runner.os == 'Windows'
+        run: powershell -ExecutionPolicy Bypass -File ./9router-manager.ps1 --version
+
+      - name: Help output works without a server
+        if: runner.os != 'Windows'
+        run: bash 9router-manager.sh --help
