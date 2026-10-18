@@ -22,6 +22,7 @@ dipakai saat server sedang hidup dan routing kamu tidak terganggu.
     ├── test_platform_paths.py    # 22 tes path Windows/macOS/Linux
     ├── mock_9router_server.py    # admin API 9router tiruan, aturan auth asli
     ├── run_all.py                # jalankan semua suite
+    ├── verify_with_live_9router.py # cek end-to-end (opt-in) ke server asli
     └── smoke-test.sh             # pembungkus praktis
 ```
 
@@ -218,11 +219,22 @@ Semua tes jalan lawan mock server di `127.0.0.1` dengan data dir dan manager hom
 sementara, jadi config 9router asli tidak pernah tersentuh. Semuanya Python murni tanpa
 shell, jadi perintah yang sama jalan di Windows: `python tests\run_all.py`.
 
-Hasil terakhir di mesin ini (9router 0.5.104, Linux): **27 ok / 0 fail** (smoke) dan
-**22 ok / 0 fail** (platform), plus verifikasi langsung ke server yang sedang jalan:
-buat endpoint -> tambah key -> tambah model -> edit endpoint -> generate -> tes koneksi
--> hapus endpoint (cascade), siklus API key client, dan backup/restore yang
-mengembalikan config identik sementara router tetap melayani permintaan.
+Untuk 9router yang sedang jalan di mesin kamu (opt-in, bikin endpoint sementara lalu
+menghapusnya sendiri, plus cek backup/restore):
+
+```bash
+python3 tests/verify_with_live_9router.py --allow-writes
+```
+
+Isinya 15 pengecekan: auth token turunan, tambah endpoint, ikat key, tambah model, edit
+endpoint (termasuk cek 9router menyebarkan base URL baru ke koneksi terikat), generate
+snippet, tes koneksi, hapus endpoint (cascade), jumlah config kembali ke kondisi awal,
+dan restore yang menyisakan config identik.
+
+Hasil terakhir (9router 0.5.104, Linux): **27 ok / 0 fail** (smoke), **22 ok / 0 fail**
+(platform), **15 ok / 0 fail** (live). CI menjalankan dua suite offline di ubuntu 3.8,
+ubuntu 3.12, macOS, dan Windows (di sana masing-masing melaporkan **27 ok / 0 fail** dan
+**22 ok / 0 fail**), plus pengecekan ketiga launcher di tiap OS.
 
 ## Batasan (jujur)
 

@@ -23,7 +23,8 @@ only. No `pip install`, no Node, no build step.
     ├── smoke_test.py             # 27 tests against a mock 9router (portable)
     ├── test_platform_paths.py    # 22 tests: Windows/macOS/Linux path logic
     ├── mock_9router_server.py    # in-memory 9router admin API, real auth rules
-    ├── run_all.py                # run every suite
+    ├── run_all.py                 # run every suite
+    ├── verify_with_live_9router.py # opt-in end-to-end check against a real server
     └── smoke-test.sh             # convenience wrapper
 ```
 
@@ -223,6 +224,18 @@ bash tests/smoke-test.sh            # same thing on Linux/macOS
 python3 tests/smoke_test.py add     # only tests whose name contains "add"
 ```
 
+Against your own running 9router (opt-in: it writes a disposable endpoint and removes
+it again, then checks a backup/restore round trip):
+
+```bash
+python3 tests/verify_with_live_9router.py --allow-writes
+```
+
+That is 15 checks: derived-token auth, add endpoint, bind key, add model, edit endpoint
+(and 9router propagating the new base URL to the bound connection), generate snippets,
+test connection, delete endpoint with cascade, config counts back to baseline, and
+restore leaving the config identical.
+
 Everything runs against a throwaway mock server on `127.0.0.1` with a temporary data
 dir and manager home, so your real 9router config is never touched. Pure Python, no
 shell, no external services, so the same commands work on Windows:
@@ -237,11 +250,10 @@ that a real key never reaches stdout), backup-before-every-write, `--no-backup`,
 backup/restore round trip, `--json` stdout purity, friendly offline errors, menu exit,
 Windows/macOS path resolution, and Python 3.8 syntax compatibility.
 
-Last run on this machine (9router 0.5.104, Linux): **27 ok / 0 fail** (smoke),
-**22 ok / 0 fail** (platform). Plus a live pass against the running server: create
-endpoint -> add key -> add model -> edit endpoint -> generate -> test connection ->
-delete endpoint (cascade), client-key create/disable/delete, and a backup/restore round
-trip that left the config byte-identical and the router still serving.
+Last run (9router 0.5.104, Linux): **27 ok / 0 fail** (smoke), **22 ok / 0 fail**
+(platform), **15 ok / 0 fail** (live). CI runs the two offline suites on
+ubuntu 3.8 + ubuntu 3.12 + macOS + Windows (each reported **27 ok / 0 fail** and
+**22 ok / 0 fail** there) and checks all three launchers per OS.
 
 ## Limits (honest)
 
