@@ -33,7 +33,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 PROGRAM = "9router-manager"
 DEFAULT_PORT = 20128
 DEFAULT_HOST = "127.0.0.1"
