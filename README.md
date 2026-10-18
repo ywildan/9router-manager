@@ -21,7 +21,7 @@ only. No `pip install`, no Node, no build step.
 ├── install.ps1               # setup for Windows (adds a shim + PATH hint)
 └── tests/
     ├── smoke_test.py             # 27 tests against a mock 9router (portable)
-    ├── test_platform_paths.py    # 22 tests: Windows/macOS/Linux path logic
+    ├── test_platform_paths.py    # 24 tests: Windows/macOS/Linux paths + packaging checks
     ├── mock_9router_server.py    # in-memory 9router admin API, real auth rules
     ├── run_all.py                 # run every suite
     ├── verify_with_live_9router.py # opt-in end-to-end check against a real server
@@ -250,10 +250,10 @@ that a real key never reaches stdout), backup-before-every-write, `--no-backup`,
 backup/restore round trip, `--json` stdout purity, friendly offline errors, menu exit,
 Windows/macOS path resolution, and Python 3.8 syntax compatibility.
 
-Last run (9router 0.5.104, Linux): **27 ok / 0 fail** (smoke), **22 ok / 0 fail**
+Last run (9router 0.5.104, Linux): **27 ok / 0 fail** (smoke), **24 ok / 0 fail**
 (platform), **15 ok / 0 fail** (live). CI runs the two offline suites on
 ubuntu 3.8 + ubuntu 3.12 + macOS + Windows (each reported **27 ok / 0 fail** and
-**22 ok / 0 fail** there) and checks all three launchers per OS.
+**24 ok / 0 fail** there) and checks all three launchers per OS.
 
 ## Limits (honest)
 

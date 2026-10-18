@@ -260,6 +260,36 @@ def test_mutating_commands_are_listed():
 
 
 @test
+def test_every_python_file_compiles():
+    targets = sorted(ROOT.glob("*.py")) + sorted((ROOT / "tests").glob("*.py"))
+    check(len(targets) >= 6, "file python tidak lengkap: %s" % [p.name for p in targets])
+    for path in targets:
+        source = path.read_text(encoding="utf-8")
+        try:
+            compile(source, str(path), "exec")
+        except SyntaxError as exc:
+            raise AssertionError("%s tidak bisa dicompile: %s" % (path.name, exc))
+
+
+@test
+def test_repo_files_present_and_wired():
+    for name in ("9router-manager.py", "9router-manager.sh", "9router-manager.ps1",
+                 "9router-manager.cmd", "install.sh", "install.ps1",
+                 "README.md", "README.id.md", "LICENSE"):
+        path = ROOT / name
+        check(path.is_file(), "%s hilang" % name)
+        check(path.stat().st_size > 0, "%s kosong" % name)
+
+    for name in ("9router-manager.sh", "9router-manager.ps1", "9router-manager.cmd"):
+        text = (ROOT / name).read_text(encoding="utf-8")
+        check("9router-manager.py" in text, "%s tidak memanggil engine" % name)
+
+    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    for needle in ("ubuntu-latest", "macos-latest", "windows-latest", "3.8"):
+        check(needle in workflow, "CI tidak menyertakan %s" % needle)
+
+
+@test
 def test_cli_parser_accepts_every_documented_command():
     parser = engine.build_parser()
     samples = [

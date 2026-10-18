@@ -19,7 +19,7 @@ dipakai saat server sedang hidup dan routing kamu tidak terganggu.
 ├── install.ps1               # setup Windows (bikin shim + info PATH)
 └── tests/
     ├── smoke_test.py             # 27 tes lawan mock 9router (portable)
-    ├── test_platform_paths.py    # 22 tes path Windows/macOS/Linux
+    ├── test_platform_paths.py    # 24 tes path Windows/macOS/Linux + cek paket
     ├── mock_9router_server.py    # admin API 9router tiruan, aturan auth asli
     ├── run_all.py                # jalankan semua suite
     ├── verify_with_live_9router.py # cek end-to-end (opt-in) ke server asli
@@ -231,10 +231,10 @@ endpoint (termasuk cek 9router menyebarkan base URL baru ke koneksi terikat), ge
 snippet, tes koneksi, hapus endpoint (cascade), jumlah config kembali ke kondisi awal,
 dan restore yang menyisakan config identik.
 
-Hasil terakhir (9router 0.5.104, Linux): **27 ok / 0 fail** (smoke), **22 ok / 0 fail**
+Hasil terakhir (9router 0.5.104, Linux): **27 ok / 0 fail** (smoke), **24 ok / 0 fail**
 (platform), **15 ok / 0 fail** (live). CI menjalankan dua suite offline di ubuntu 3.8,
 ubuntu 3.12, macOS, dan Windows (di sana masing-masing melaporkan **27 ok / 0 fail** dan
-**22 ok / 0 fail**), plus pengecekan ketiga launcher di tiap OS.
+**24 ok / 0 fail**), plus pengecekan ketiga launcher di tiap OS.
 
 ## Batasan (jujur)
 
